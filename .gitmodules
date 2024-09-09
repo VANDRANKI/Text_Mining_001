@@ -1,0 +1,15 @@
+[submodule "MatBERT-synthesis-classifier"]
+	path = MatBERT-synthesis-classifier
+	url = https://github.com/CederGroupHub/MatBERT-synthesis-classifier.git
+[submodule "MatEntityRecognition"]
+	path = MatEntityRecognition
+	url = https://github.com/CederGroupHub/MatEntityRecognition.git
+[submodule "MaterialParser"]
+	path = MaterialParser
+	url = https://github.com/CederGroupHub/MaterialParser.git
+[submodule "ValenceSolver"]
+	path = ValenceSolver
+	url = git@github.com:CederGroupHub/ValenceSolver.git
+[submodule "MaterialAmountExtractor"]
+	path = MaterialAmountExtractor
+	url = git@github.com:CederGroupHub/MaterialAmountExtractor.git
