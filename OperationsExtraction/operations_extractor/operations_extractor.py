@@ -3,7 +3,7 @@ import os
 import numpy as np
 
 from gensim.models import Word2Vec
-from tensorflow import keras
+import tensorflow as tf
 
 from .utils import replace_token_upd, make_spacy_tokens
 
@@ -20,8 +20,22 @@ class OperationsExtractor:
 
         my_folder = os.path.dirname(os.path.realpath(__file__))
 
-        self.__embeddings = Word2Vec.load(os.path.join(my_folder, embedding_model))
-        self.__model = keras.layers.TFSMLayer(os.path.join(my_folder, extractor_model), call_endpoint='serving_default')
+        try:
+            self.__embeddings = Word2Vec.load(os.path.join(my_folder, embedding_model))
+            print("Word2Vec embeddings loaded successfully.")
+        except Exception as e:
+            print(f"Error loading Word2Vec embeddings: {str(e)}")
+            raise
+
+        try:
+            model_path = os.path.join(my_folder, extractor_model)
+            self.__model = tf.saved_model.load(model_path)
+            print(f"TensorFlow model loaded successfully from {model_path}")
+        except Exception as e:
+            print(f"Error loading TensorFlow model: {str(e)}")
+            print(f"Model path: {model_path}")
+            print(f"TensorFlow version: {tf.__version__}")
+            raise
 
         # declare operation types
         self.__num2operation = {0: "",
