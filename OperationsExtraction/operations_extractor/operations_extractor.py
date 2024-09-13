@@ -5,7 +5,7 @@ import numpy as np
 from gensim.models import Word2Vec
 from tensorflow import keras
 
-from operations_extractor.utils import replace_token_upd, make_spacy_tokens
+from .utils import replace_token_upd, make_spacy_tokens
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
@@ -21,7 +21,7 @@ class OperationsExtractor:
         my_folder = os.path.dirname(os.path.realpath(__file__))
 
         self.__embeddings = Word2Vec.load(os.path.join(my_folder, embedding_model))
-        self.__model = keras.models.load_model(os.path.join(my_folder, extractor_model))
+        self.__model = keras.layers.TFSMLayer(os.path.join(my_folder, extractor_model), call_endpoint='serving_default')
 
         # declare operation types
         self.__num2operation = {0: "",
@@ -74,7 +74,7 @@ class OperationsExtractor:
         """
         spacy_tokens = make_spacy_tokens(sentence)
         sentence_vector = self.__get_sentence_vector(spacy_tokens)
-        prediction = self.__model.predict(sentence_vector)[0]
+        prediction = self.__model(sentence_vector)['output_1'].numpy()[0]
         tags_predicted = [self.__num2operation[np.argmax(v)] for v in prediction][0:len(spacy_tokens)]
 
         return tags_predicted

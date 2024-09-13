@@ -3,6 +3,7 @@ import json
 import os
 import re
 from PyPDF2 import PdfReader
+from operations_extractor_wrapper import extract_operations
 
 def extract_text_from_pdf(pdf_path):
     """Extract text from a PDF file page by page."""
@@ -16,12 +17,50 @@ def extract_text_from_pdf(pdf_path):
         print(f"Error extracting text from {pdf_path}: {str(e)}")
         return []
 
+def split_into_sentences(text):
+    """Split text into sentences."""
+    return re.findall(r'[^.!?]+[.!?]', text)
+
+def split_into_chunks(text, word_limit=200):
+    """Split text into chunks of approximately 200 words, trying to end at sentence or word boundaries."""
+    words = text.split()
+    chunks = []
+    current_chunk = []
+    word_count = 0
+
+    for word in words:
+        current_chunk.append(word)
+        word_count += 1
+        
+        if word_count >= word_limit:
+            chunk_text = ' '.join(current_chunk)
+            sentences = split_into_sentences(chunk_text)
+            
+            if len(sentences) > 1:
+                # If we have multiple sentences, split at the last complete sentence
+                last_sentence = sentences.pop()
+                chunks.append(' '.join(sentences))
+                current_chunk = last_sentence.split()
+            else:
+                # If we only have one sentence, just add the chunk as is
+                chunks.append(chunk_text)
+                current_chunk = []
+            
+            word_count = len(current_chunk)
+    
+    if current_chunk:
+        chunks.append(' '.join(current_chunk))
+    
+    return chunks
+
 def extract_paragraphs_from_pages(pages):
-    """Extract paragraphs from pages of text."""
+    """Extract paragraphs from pages of text and split into chunks."""
     paragraphs = []
     for page in pages:
-        page_paragraphs = [p.strip() for p in page.split('\n\n') if p.strip()]
-        paragraphs.extend(page_paragraphs)
+        page_text = page.strip()
+        if page_text:
+            chunks = split_into_chunks(page_text)
+            paragraphs.extend(chunks)
     return paragraphs
 
 def extract_doi(text):
@@ -31,20 +70,25 @@ def extract_doi(text):
     return match.group(0) if match else None
 
 def process_pdfs(pdf_paths):
-    """Process PDFs and create JSON structure with DOIs as keys and paragraphs as values."""
+    """Process PDFs and create JSON structure with DOIs as keys and paragraphs with operations as values."""
     result = {}
     for pdf_path in pdf_paths:
         pages = extract_text_from_pdf(pdf_path)
         if pages:
             paragraphs = extract_paragraphs_from_pages(pages)
             doi = None
+            processed_paragraphs = []
             for paragraph in paragraphs:
-                doi = extract_doi(paragraph)
-                if doi:
-                    break
+                if not doi:
+                    doi = extract_doi(paragraph)
+                operations = extract_operations(paragraph)
+                processed_paragraphs.append({
+                    "text": paragraph,
+                    "operations": operations
+                })
             
             if doi:
-                result[doi] = paragraphs
+                result[doi] = processed_paragraphs
             else:
                 print(f"No DOI found for {pdf_path}")
     return result
