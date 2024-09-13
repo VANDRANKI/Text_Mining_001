@@ -5,8 +5,13 @@ import json
 import os
 from PyPDF2 import PdfReader
 
- 
-    
+pdf_path = '/Users/school/Documents/Organized Documents/Text-Mining Git/Text_Mining_001/FindChemicalCompundsFromPDF/v.csv'
 
-def extract_text_from_pdf(pdf_path):
-    Input_CSV_file_path = pdf_path
+# Read the CSV file and extract PDF file paths
+
+pdf_file_paths = []
+
+with open(pdf_path, 'r') as csvfile:
+    reader = csv.reader(csvfile)
+    for row in reader:
+        pdf_file_paths.append(row[AL])  # Assuming the PDF file paths are in AL column
